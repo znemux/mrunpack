@@ -1,0 +1,19 @@
+plugins {
+    id "application"
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id "java"
+}
+
+repositories { mavenCentral() }
+dependencies {
+    implementation 'org.json:json:20240303'
+    implementation 'com.formdev:flatlaf:3.4.1'
+}
+java { sourceCompatibility = targetCompatibility = "8" }
+application { mainClass = "znemux.mrzip.Main" }
+shadowJar {  }
+
+distTar.enabled = false
+distZip.enabled = false
+shadowDistTar.enabled = false
+shadowDistZip.enabled = false

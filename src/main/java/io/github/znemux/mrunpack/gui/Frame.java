@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import static javax.swing.JOptionPane.ERROR_MESSAGE;
+import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -34,12 +36,6 @@ public class Frame extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         label.setText("Select a Modrinth modpack (.mrpack)");
-
-        progressBar.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                progressBarStateChanged(evt);
-            }
-        });
 
         selectButton.setText("Select file");
         selectButton.addActionListener(new java.awt.event.ActionListener() {
@@ -104,7 +100,8 @@ public class Frame extends javax.swing.JFrame {
             try {
                 textField.setText(fileChooser.getSelectedFile().getCanonicalPath());
             } catch (IOException ex) {
-                message(ex.getMessage());
+                ex.printStackTrace();
+                messageError(ex.toString());
             }
         }
         
@@ -113,32 +110,36 @@ public class Frame extends javax.swing.JFrame {
     private void unpackButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unpackButtonActionPerformed
         Path file = Path.of(textField.getText());
         if (!Files.exists(file) || Files.isDirectory(file)) {
-            message("Error: " + file + " doesn't exist or is a directory");
+            messageError("Error: " + file + " doesn't exist or is a directory");
             return;
         } else if (!file.toString().endsWith(".mrpack")) {
-            message("Error: " + file + " isn't a valid Mrpack file");
+            messageError("Error: " + file + " isn't a valid Mrpack file");
             return;
         }
         unpackButton.setEnabled(false);
         Runnable task = () -> {
             try {
                 Main.unpack(file);
-            } catch (IOException |URISyntaxException ex) {
-                message("Error: " + ex.getMessage());
+            } catch (URISyntaxException | IOException ex) {
+                ex.printStackTrace();
+                messageError(ex.toString());
+            } finally {
+                frame.unpackButton.setEnabled(true);
             }
         };
         new Thread(task).start();
     }//GEN-LAST:event_unpackButtonActionPerformed
-
-    private void progressBarStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_progressBarStateChanged
-    }//GEN-LAST:event_progressBarStateChanged
     
     public void updateProgressBar(int value) {
         progressBar.setValue(value);
     }
     
-    public void message(String message) {
-        JOptionPane.showMessageDialog(this, message);
+    public void messageError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Error", ERROR_MESSAGE);
+    }
+    
+    public void messageInfo(String message) {
+        JOptionPane.showMessageDialog(this, message, "Information", INFORMATION_MESSAGE);
     }
     
     public static void init() {

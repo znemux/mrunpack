@@ -10,47 +10,48 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 public class Download {
     
-    public static float elements = 0;
+    public static long elements = 0;
     public static int progress = 0;
+    static int percent = 0;
     
     static void updateProgress(int increment) {
         progress += increment;
-        frame.updateProgressBar((int)(progress*100/elements));
-    }
-    
-    static Map<Path, String> getFileLinks(Path indexFile) throws IOException {
-        progress = 0; updateProgress(0);
-        Index index = (Index) JSON.toObject(indexFile, Index.class);
-        HashMap files = new HashMap<Path, String>();
-        for (File file : index.getFiles()) {
-            files.put(file.getPath(), file.getDownloads().getFirst());
+        int curpercent = (int)(progress*100l/(double)elements);
+        if (curpercent != percent) {
+            percent = curpercent;
+            frame.updateProgressBar(percent);
         }
-        elements = files.size();
-        return files;
     }
     
-    public static void files(Map<Path, String> files, Path root) throws IOException, URISyntaxException {
+    static List<File> getFileLinks(Path indexFile) throws IOException {
+        Index index = (Index) JSON.toObject(indexFile, Index.class);
+        return index.getFiles();
+    }
+    
+    public static void files(List<File> files, Path root) throws IOException, URISyntaxException {
         if (!Files.exists(root)) Files.createDirectories(root);
-        for (Path path : files.keySet()) {
-            System.out.println("Downloading "+path.toString());
-            Download.file(files.get(path), root.resolve(path));
-            updateProgress(1);
+        elements = files.stream().mapToLong(File::getFileSize).sum();
+        for (File file : files) {
+            System.out.println("Downloading "+file.toString()+" ("+percent+"%)");
+            Download.file(file, root);
         }
     }
 
-    private static void file(String url, Path target) throws IOException, URISyntaxException {
-        URI downloadUrl = new URI(url);
-        Files.createDirectories(target.getParent());
-        try (InputStream in = downloadUrl.toURL().openStream(); FileOutputStream out = new FileOutputStream(target.toFile())) {
-            byte[] buffer = new byte[1024];
+    private static void file(File file, Path root) throws IOException, URISyntaxException {
+        URI downloadUrl = new URI(file.getDownloads().getFirst());
+        Path fullPath = root.resolve(file.getPath());
+        Files.createDirectories(fullPath.getParent());
+        try (InputStream in = downloadUrl.toURL().openStream(); FileOutputStream out = new FileOutputStream(fullPath.toFile())) {
+            byte[] buffer = new byte[4096];
             int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1)
+            while ((bytesRead = in.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
+                updateProgress(4096);
+            }
         }
     }
 }

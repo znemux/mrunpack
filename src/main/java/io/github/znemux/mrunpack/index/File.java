@@ -29,4 +29,13 @@ public class File {
     public long getFileSize() {
         return fileSize;
     }
+    
+    public java.io.File toJavaFile() {
+        return getPath().toFile();
+    }
+    
+    @Override
+    public String toString() {
+        return path;
+    }
 }

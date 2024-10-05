@@ -11,6 +11,7 @@ public class Index {
     @SerializedName("versionId")
     private String versionId;
     private String name;
+    private String summary;
     private List<File> files;
     private Map<String, String> dependencies;
 
@@ -28,6 +29,10 @@ public class Index {
 
     public String getName() {
         return name;
+    }
+    
+    public String getSummary() {
+        return summary;
     }
 
     public List<File> getFiles() {
